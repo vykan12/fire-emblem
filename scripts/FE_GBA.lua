@@ -94,7 +94,7 @@ function printRNGTable(n)
 	RNGTable = RNGSimulate(n)
 	-- Print each RNG value
 	for i=1,n do
-		gui.text(228, 8*(i-1), string.format("%3d", RNGTable[i]/655))
+		gui.text(228, 8*(i-1), string.format("%3d", RNGTable[i]/655.36))
 	end
 	-- Print the labels next to the first 4 RNG values
 	gui.text(210,0,"RNG1:")
@@ -236,11 +236,36 @@ function RNGSearch(lookAheadDistance, value, comparator)
 	return '---'
 end
 
+function computePathTraceBurn()
+	local leftRight = 3 -- Used for 0-49
+	local upDown = 4 -- Used for 50-99
+	local currentSeed = {memory.readword(RNGBase+4), memory.readword(RNGBase+2), memory.readword(RNGBase+0)}
+	local RNsBurned = 0
+	currentSeed = advanceRNGTable(currentSeed) -- This way next RN is currentSeed[3]
+
+	while leftRight > 0 and upDown > 0 do
+		if math.floor(currentSeed[3]/655.36) <= 49 then
+			leftRight = leftRight - 1
+		else
+			upDown = upDown - 1
+		end
+		currentSeed = advanceRNGTable(currentSeed)
+		RNsBurned = RNsBurned + 1
+	end
+
+	gui.text(0, 24, "up: ")
+	gui.text(0, 32, "down: ")
+	gui.text(0, 40, "left: ")
+	gui.text(0, 48, "right: ")
+end
+
 function RNGDisplay()
 	gui.text(0, 0, RNGLookAhead(2000), "green")
 	gui.text(0, 8, RNGStateChangeCounter, "red")
 
 	printRNGTable(RNGEntries)
+	--computePathTraceBurn() Uncomment when finished
+
 	userInput = input.get()
 	-- Ugly button holding logic
 	if userInput.Q then
