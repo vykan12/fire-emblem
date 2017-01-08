@@ -298,6 +298,7 @@ function computePathTraceBurns()
 	local leftBurn = 0
 	local rightBurn = 0
 	local movementString = ""
+	local directionsEncountered = {}
 	local currentSeed = {memory.readword(RNGBase+4), memory.readword(RNGBase+2), memory.readword(RNGBase+0)}
 	currentSeed = advanceRNGTable(currentSeed) -- This way next RN is currentSeed[3]
 	
@@ -330,17 +331,28 @@ function computePathTraceBurns()
 
 		if char == 'U' then
 			upDown = upDown + 1
+			directionsEncountered['U'] = true
 		elseif char == 'D' then
 			upDown = upDown - 1
+			directionsEncountered['D'] = true
 		elseif char == 'L' then
 			leftRight = leftRight - 1
+			directionsEncountered['L'] = true
 		elseif char == 'R' then
 			leftRight = leftRight + 1
+			directionsEncountered['R'] = true
 		end
 	end
 
 	upDown = math.abs(upDown)
 	leftRight = math.abs(leftRight)
+
+	-- TODO: Compare path length to max path, factoring in directions encountered to determine potential burns in each direction
+	if (maxMovement - pathLength) == 0 then
+		-- do something
+	elseif (pathLength - maxMovement) == 1 then
+		-- do something
+	end
 
 	gui.text(0, 24, "up: "..upBurn)
 	gui.text(0, 32, "down: "..downBurn)
@@ -352,6 +364,7 @@ function computePathTraceBurns()
 	gui.text(0, 80, "left/right: "..leftRight)
 	gui.text(0, 88, "up/down: "..upDown)
 	gui.text(0, 96, "last input: "..string.sub(movementString, -1, -1))
+	gui.text(0, 104, "directions encountered: "..tostring(directionsEncountered))
 end
 
 function RNGDisplay()
