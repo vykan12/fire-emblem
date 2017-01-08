@@ -374,8 +374,57 @@ function checkForUserInput()
 	end
 end
 
+function enemyPhase()
+	local escape = false
+	local battleLimit = 1000
+	local key1 = {}
+	key1['A'] = true
+
+	-- Create a script-only savestate
+	RNGCheck = savestate.create()
+	savestate.save(RNGCheck)
+
+	for currentBattle = 0, battleLimit - 1, 1 do
+	  if escape == true then
+	  	break
+	  end
+
+	  savestate.load(RNGCheck)      
+	  
+	  -- RNG Loop
+	  for i = 1, currentBattle, 1 do
+	    Rtemp = nextRNG(memory.readword(RNGBase + 4), memory.readword(RNGBase + 2), memory.readword(RNGBase + 0))
+	    memory.writeword(RNGBase + 4, memory.readword(RNGBase + 2))
+	    memory.writeword(RNGBase + 2, memory.readword(RNGBase + 0))
+	    memory.writeword(RNGBase + 0, Rtemp)
+	  end
+
+	  -- Phase Loop
+	  while memory.readbyte(Phase) == 128 do
+	  	local userInput = input.get()
+	  	
+	  	if userInput.F then
+	  		escape = true
+	  		break
+	  	end
+
+	    joypad.set(1, key1) -- hold A
+	    key1.start = (not key1.start) or nil -- press start every two frames
+	    emu.frameadvance()
+	    gui.text(10,10, string.format('%d of %d done.', currentBattle + 1, battleLimit))
+	  end
+	end
+end
+
+-- The main loop
 while true do
-	RNGDisplay()
-	checkForUserInput()
-	emu.frameadvance()
+	local userInput = input.get()
+
+	if userInput.E and memory.readbyte(Phase) == 128 then
+		enemyPhase()
+	else
+		RNGDisplay()
+		checkForUserInput()
+		emu.frameadvance()
+	end
 end
