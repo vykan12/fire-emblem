@@ -362,27 +362,27 @@ function computePathTraceBurns()
 			-- 4 cases: UL, UR, DL, DR
 			if directionsEncountered['U'] and directionsEncountered['L'] then
 				if lastInput == "U" then
-					gui.text(0, 112, "only burn is right", "green")
+					rightBurn = computeBurn(leftRight - 1, upDown, currentSeed)
 				elseif lastInput == "L" then
-					gui.text(0, 112, "only burn is down", "green")
+					downBurn = computeBurn(leftRight, upDown - 1, currentSeed)
 				end
 			elseif directionsEncountered['U'] and directionsEncountered['R'] then
 				if lastInput == "U" then
-					gui.text(0, 112, "only burn is left", "green")
+					leftBurn = computeBurn(leftRight - 1, upDown, currentSeed)
 				elseif lastInput == "R" then
-					gui.text(0, 112, "only burn is down", "green")
+					downBurn = computeBurn(leftRight, upDown - 1, currentSeed)
 				end
 			elseif directionsEncountered['D'] and directionsEncountered['L'] then
 				if lastInput == "D" then
-					gui.text(0, 112, "only burn is right", "green")
+					rightBurn = computeBurn(leftRight - 1, upDown, currentSeed)
 				elseif lastInput == "L" then
-					gui.text(0, 112, "only burn is up", "green")
+					upBurn = computeBurn(leftRight, upDown - 1, currentSeed)
 				end
 			elseif directionsEncountered['D'] and directionsEncountered['R'] then
 				if lastInput == "D" then
-					gui.text(0, 112, "only burn is left", "green")
+					leftBurn = computeBurn(leftRight - 1, upDown, currentSeed)
 				elseif lastInput == "R" then
-					gui.text(0, 112, "only burn is up", "green")
+					upBurn = computeBurn(leftRight, upDown - 1, currentSeed)
 				end
 			end
 		else
