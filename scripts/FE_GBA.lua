@@ -5,6 +5,29 @@ initialRNG2 = memory.readword(RNGBase+2)
 initialRNG3 = memory.readword(RNGBase+0)
 RNGEntries = 20
 RNGStateChangeCounter = 0
+gameID = ""
+
+-- Read consecutive values from the ROM to find a special string (ex/ FIREEMBLEM6.AFEJ01) used to distinguish between games
+for i = 0, 18, 1 do
+	gameID = gameID..memory.readbyte(0x080000A0 + i)
+end
+
+currentGame = nil
+
+-- Compare the found gameID to known IDs to determine which game is being played
+if gameID == "70738269697766766977540657069744849150" then
+	currentGame = "Sealed Sword J"
+elseif gameID == "70738269697766766977690656955694849150" then
+	currentGame = "Blazing Sword U"
+elseif gameID == "70738269697766766977550656955744849150" then
+	currentGame = "Blazing Sword J"
+elseif gameID == "707382696977667669775069666956694849150" then
+	currentGame = "Sacred Stones U"
+elseif gameID == "70738269697766766977560666956744849150" then
+	currentGame = "Sacred Stones J"
+end
+
+print("Current game: "..currentGame)
 
 userInput = {}
 
