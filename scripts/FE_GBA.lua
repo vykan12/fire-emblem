@@ -44,51 +44,48 @@ GUIInputs = {}
 
 -- A mapping of all the relevant keys being held down
 heldDown = {
-
-['1'] = false, 
-['2'] = false, 
-['3'] = false, 
-['4'] = false, 
-['5'] = false, 
-['6'] = false, 
-['7'] = false, 
-['8'] = false, 
-['9'] = false, 
-['0'] = false,
-['comma'] = false,
-['period'] = false,
-['plus'] = false,
-['backspace'] = false,
-['enter'] = false,
-['I'] = false,
-['O'] = false
-
+	['1'] = false, 
+	['2'] = false, 
+	['3'] = false, 
+	['4'] = false, 
+	['5'] = false, 
+	['6'] = false, 
+	['7'] = false, 
+	['8'] = false, 
+	['9'] = false, 
+	['0'] = false,
+	['comma'] = false,
+	['period'] = false,
+	['plus'] = false,
+	['backspace'] = false,
+	['enter'] = false,
+	['I'] = false,
+	['O'] = false
 }
 
 -- Used to map input.get() keyboard input to values you actually want (only relevant for comma, period and plus here)
 mapping = {
-	
-['1'] = 1,
-['2'] = 2,
-['3'] = 3,
-['4'] = 4,
-['5'] = 5,
-['6'] = 6,
-['7'] = 7,
-['8'] = 8,
-['9'] = 9,
-['0'] = 0,
-['comma'] = '<',
-['period'] = '>',
-['plus'] = '=',
-['backspace'] = 'backspace',
-['enter'] = 'enter',
-['I'] = 'I',
-['O'] = 'O'
-
+	['1'] = 1,
+	['2'] = 2,
+	['3'] = 3,
+	['4'] = 4,
+	['5'] = 5,
+	['6'] = 6,
+	['7'] = 7,
+	['8'] = 8,
+	['9'] = 9,
+	['0'] = 0,
+	['comma'] = '<',
+	['period'] = '>',
+	['plus'] = '=',
+	['backspace'] = 'backspace',
+	['enter'] = 'enter',
+	['I'] = 'I',
+	['O'] = 'O'
 }
 
 inputMode = 'Off'
+pathTraceScript = false
 
 function previousRNG(r1, r2, r3)
 	-- Given three sequential RNG values, generate the value before it
@@ -289,45 +286,74 @@ end
 function computePathTraceBurns()
 	-- Applies the computeBurn function to determine how many RNs are burned by moving the cursor up, down, left or right
 	
-	local isCharacterSelected = memory.readbyte(0x202BEE8) -- Might not be the correct address
+	--local isCharacterSelected = memory.readbyte(0x202BEE8) -- TODO: Find correct address for this
 	local maxMovement = memory.readbyte(0x203A9BB)
 	local pathLength = memory.readbyte(0x203A9BC)
 	local xPosBase = 0x203A9BD
 	local yPosBase = 0x203A9D1
 	local leftRight = 3 -- Used for 0-49
 	local upDown = 4 -- Used for 50-99
+	local upBurn = 0
+	local downBurn = 0
+	local leftBurn = 0
+	local rightBurn = 0
+	local movementString = ""
 	local currentSeed = {memory.readword(RNGBase+4), memory.readword(RNGBase+2), memory.readword(RNGBase+0)}
 	currentSeed = advanceRNGTable(currentSeed) -- This way next RN is currentSeed[3]
-
-	gui.text(0, 24, "up: "..computeBurn(leftRight, upDown + 1, currentSeed))
-	gui.text(0, 32, "down: "..computeBurn(leftRight, upDown - 1, currentSeed))
-	gui.text(0, 40, "left: "..computeBurn(leftRight - 1, upDown, currentSeed))
-	gui.text(0, 48, "right: "..computeBurn(leftRight + 1, upDown, currentSeed))
 	
-	if isCharacterSelected == 1 then
+	--if isCharacterSelected == 1 then
 		-- Determine the path traced and print the results
 		for i = 1, math.min(pathLength, maxMovement), 1 do
 			if memory.readbyte(xPosBase + i) > memory.readbyte(xPosBase + i - 1) then
-				gui.text(0 + 8*(i-1), 64, "R")
+				-- moving right
+				--gui.text(0 + 8*(i-1), 64, "R")
+				movementString = movementString.."R"
 			elseif memory.readbyte(xPosBase + i) < memory.readbyte(xPosBase + i - 1) then
-				gui.text(0 + 8*(i-1), 64, "L")
+				-- moving left
+				--gui.text(0 + 8*(i-1), 64, "L")
+				movementString = movementString.."L"
 			elseif memory.readbyte(yPosBase + i) > memory.readbyte(yPosBase + i - 1) then
-				gui.text(0 + 8*(i-1), 64, "D")
+				-- moving down
+				--gui.text(0 + 8*(i-1), 64, "D")
+				movementString = movementString.."D"
 			elseif memory.readbyte(yPosBase + i) < memory.readbyte(yPosBase + i - 1) then
-				gui.text(0 + 8*(i-1), 64, "U")
+				-- moving up
+				--gui.text(0 + 8*(i-1), 64, "U")
+				movementString = movementString.."U"
 			end
 		end
-	end
+	--end
+
+	gui.text(0, 24, "up: "..upBurn)
+	gui.text(0, 32, "down: "..downBurn)
+	gui.text(0, 40, "left: "..leftBurn)
+	gui.text(0, 48, "right: "..rightBurn)
+	gui.text(0, 56, "max movement: "..maxMovement)
+	gui.text(0, 64, "path length: "..pathLength)
+	gui.text(0, 72, "drawn path: "..movementString)
+
 end
 
 function RNGDisplay()
 	gui.text(0, 0, RNGLookAhead(2000), "green")
 	gui.text(0, 8, RNGStateChangeCounter, "red")
 
-	printRNGTable(RNGEntries)
-	--computePathTraceBurns() --Uncomment when finished
-
 	userInput = input.get()
+
+	printRNGTable(RNGEntries)
+
+	if userInput.T then
+		pathTraceScript = true
+	end
+
+	if userInput.Y then
+		pathTraceScript = false
+	end
+
+	if pathTraceScript then
+		computePathTraceBurns()
+	end
+
 	-- Ugly button holding logic
 	if userInput.Q then
 		holdButtonCounter = holdButtonCounter + 1
