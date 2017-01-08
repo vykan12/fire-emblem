@@ -412,6 +412,7 @@ function enemyPhase()
 	    key1.start = (not key1.start) or nil -- press start every two frames
 	    emu.frameadvance()
 	    gui.text(10,10, string.format('%d of %d done.', currentBattle + 1, battleLimit))
+	    printRNGTable(RNGEntries) -- TODO: implement RNG increment/decrement when holding Q or W
 	  end
 	end
 end
