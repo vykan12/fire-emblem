@@ -236,12 +236,16 @@ function RNGSearch(lookAheadDistance, value, comparator)
 	return '---'
 end
 
-function computePathTraceBurn()
-	local leftRight = 3 -- Used for 0-49
-	local upDown = 4 -- Used for 50-99
-	local currentSeed = {memory.readword(RNGBase+4), memory.readword(RNGBase+2), memory.readword(RNGBase+0)}
+function computeBurn(leftRight, upDown, currentSeed)
+	-- Computes the number of RN burns required from a target square to the character (determined by left/right and up/down distance between the two)
 	local RNsBurned = 0
-	currentSeed = advanceRNGTable(currentSeed) -- This way next RN is currentSeed[3]
+
+	-- Address for length of movement path: 0203A8A4
+
+	-- If target square exceeds character's movement range, no RNs are burned
+	if leftRight + upDown > 7 then -- Replace with character's movement stat
+		return RNsBurned
+	end
 
 	while leftRight > 0 and upDown > 0 do
 		if math.floor(currentSeed[3]/655.36) <= 49 then
@@ -253,10 +257,20 @@ function computePathTraceBurn()
 		RNsBurned = RNsBurned + 1
 	end
 
-	gui.text(0, 24, "up: ")
-	gui.text(0, 32, "down: ")
-	gui.text(0, 40, "left: ")
-	gui.text(0, 48, "right: ")
+	return RNsBurned
+end
+
+function computePathTraceBurns()
+	-- Applies the computeBurn function to determine how many RNs are burned by moving the cursor up, down, left or right
+	local leftRight = 3 -- Used for 0-49
+	local upDown = 4 -- Used for 50-99
+	local currentSeed = {memory.readword(RNGBase+4), memory.readword(RNGBase+2), memory.readword(RNGBase+0)}
+	currentSeed = advanceRNGTable(currentSeed) -- This way next RN is currentSeed[3]
+
+	gui.text(0, 24, "up: "..computeBurn(leftRight, upDown + 1, currentSeed))
+	gui.text(0, 32, "down: "..computeBurn(leftRight, upDown - 1, currentSeed))
+	gui.text(0, 40, "left: "..computeBurn(leftRight - 1, upDown, currentSeed))
+	gui.text(0, 48, "right: "..computeBurn(leftRight + 1, upDown, currentSeed))
 end
 
 function RNGDisplay()
@@ -264,7 +278,7 @@ function RNGDisplay()
 	gui.text(0, 8, RNGStateChangeCounter, "red")
 
 	printRNGTable(RNGEntries)
-	--computePathTraceBurn() Uncomment when finished
+	--computePathTraceBurns() Uncomment when finished
 
 	userInput = input.get()
 	-- Ugly button holding logic
