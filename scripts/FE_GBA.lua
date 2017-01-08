@@ -291,8 +291,8 @@ function computePathTraceBurns()
 	local pathLength = memory.readbyte(0x203A9BC)
 	local xPosBase = 0x203A9BD
 	local yPosBase = 0x203A9D1
-	local leftRight = 3 -- Used for 0-49
-	local upDown = 4 -- Used for 50-99
+	local leftRight = 0 -- Used for 0-49
+	local upDown = 0 -- Used for 50-99
 	local upBurn = 0
 	local downBurn = 0
 	local leftBurn = 0
@@ -324,6 +324,24 @@ function computePathTraceBurns()
 		end
 	--end
 
+	-- Parse the movementString for net left/right and up/down distance travelled
+	for i = 0, string.len(movementString), 1 do
+		local char = string.sub(movementString, i, i)
+
+		if char == 'U' then
+			upDown = upDown + 1
+		elseif char == 'D' then
+			upDown = upDown - 1
+		elseif char == 'L' then
+			leftRight = leftRight - 1
+		elseif char == 'R' then
+			leftRight = leftRight + 1
+		end
+	end
+
+	upDown = math.abs(upDown)
+	leftRight = math.abs(leftRight)
+
 	gui.text(0, 24, "up: "..upBurn)
 	gui.text(0, 32, "down: "..downBurn)
 	gui.text(0, 40, "left: "..leftBurn)
@@ -331,7 +349,9 @@ function computePathTraceBurns()
 	gui.text(0, 56, "max movement: "..maxMovement)
 	gui.text(0, 64, "path length: "..pathLength)
 	gui.text(0, 72, "drawn path: "..movementString)
-
+	gui.text(0, 80, "left/right: "..leftRight)
+	gui.text(0, 88, "up/down: "..upDown)
+	gui.text(0, 96, "last input: "..string.sub(movementString, -1, -1))
 end
 
 function RNGDisplay()
