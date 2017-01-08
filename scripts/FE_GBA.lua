@@ -299,6 +299,8 @@ function computePathTraceBurns()
 	local rightBurn = 0
 	local movementString = ""
 	local directionsEncountered = {}
+	local numDirsEncountered = 0
+	local lastInput = nil
 	local currentSeed = {memory.readword(RNGBase+4), memory.readword(RNGBase+2), memory.readword(RNGBase+0)}
 	currentSeed = advanceRNGTable(currentSeed) -- This way next RN is currentSeed[3]
 	
@@ -325,6 +327,8 @@ function computePathTraceBurns()
 		end
 	--end
 
+	lastInput = string.sub(movementString, -1, -1)
+
 	-- Parse the movementString for net left/right and up/down distance travelled
 	for i = 0, string.len(movementString), 1 do
 		local char = string.sub(movementString, i, i)
@@ -347,11 +351,45 @@ function computePathTraceBurns()
 	upDown = math.abs(upDown)
 	leftRight = math.abs(leftRight)
 
+	for k, v in pairs(directionsEncountered) do
+		numDirsEncountered = numDirsEncountered + 1
+	end
+
 	-- TODO: Compare path length to max path, factoring in directions encountered to determine potential burns in each direction
 	if (maxMovement - pathLength) == 0 then
-		-- do something
+		-- at end of movement range
+		if numDirsEncountered == 2 then
+			-- 4 cases: UL, UR, DL, DR
+			if directionsEncountered['U'] and directionsEncountered['L'] then
+				if lastInput == "U" then
+					gui.text(0, 112, "only burn is right", "green")
+				elseif lastInput == "L" then
+					gui.text(0, 112, "only burn is down", "green")
+				end
+			elseif directionsEncountered['U'] and directionsEncountered['R'] then
+				if lastInput == "U" then
+					gui.text(0, 112, "only burn is left", "green")
+				elseif lastInput == "R" then
+					gui.text(0, 112, "only burn is down", "green")
+				end
+			elseif directionsEncountered['D'] and directionsEncountered['L'] then
+				if lastInput == "D" then
+					gui.text(0, 112, "only burn is right", "green")
+				elseif lastInput == "L" then
+					gui.text(0, 112, "only burn is up", "green")
+				end
+			elseif directionsEncountered['D'] and directionsEncountered['R'] then
+				if lastInput == "D" then
+					gui.text(0, 112, "only burn is left", "green")
+				elseif lastInput == "R" then
+					gui.text(0, 112, "only burn is up", "green")
+				end
+			end
+		else
+			-- TODO
+		end
 	elseif (pathLength - maxMovement) == 1 then
-		-- do something
+		-- currently on an orange square
 	end
 
 	gui.text(0, 24, "up: "..upBurn)
@@ -363,7 +401,7 @@ function computePathTraceBurns()
 	gui.text(0, 72, "drawn path: "..movementString)
 	gui.text(0, 80, "left/right: "..leftRight)
 	gui.text(0, 88, "up/down: "..upDown)
-	gui.text(0, 96, "last input: "..string.sub(movementString, -1, -1))
+	gui.text(0, 96, "last input: "..lastInput)
 	gui.text(0, 104, "directions encountered: "..tostring(directionsEncountered))
 end
 
