@@ -1,4 +1,3 @@
-Phase = 0x0202BCFF
 RNGBase = 0x03000000
 initialRNG1 = memory.readword(RNGBase+4)
 initialRNG2 = memory.readword(RNGBase+2)
@@ -12,22 +11,26 @@ for i = 0, 18, 1 do
 	gameID = gameID..memory.readbyte(0x080000A0 + i)
 end
 
-currentGame = nil
+gameIDMap = {
+	['70738269697766766977540657069744849150'] = "Sealed Sword J",
+	['70738269697766766977690656955694849150'] = "Blazing Sword U",
+	['70738269697766766977550656955744849150'] = "Blazing Sword J",
+	['707382696977667669775069666956694849150'] = "Sacred Stones U",
+	['70738269697766766977560666956744849150'] = "Sacred Stones J"
+}
 
--- Compare the found gameID to known IDs to determine which game is being played
-if gameID == "70738269697766766977540657069744849150" then
-	currentGame = "Sealed Sword J"
-elseif gameID == "70738269697766766977690656955694849150" then
-	currentGame = "Blazing Sword U"
-elseif gameID == "70738269697766766977550656955744849150" then
-	currentGame = "Blazing Sword J"
-elseif gameID == "707382696977667669775069666956694849150" then
-	currentGame = "Sacred Stones U"
-elseif gameID == "70738269697766766977560666956744849150" then
-	currentGame = "Sacred Stones J"
-end
+phaseMap = {
+	['Sealed Sword J'] = 0x0202AA57,
+	['Blazing Sword U'] = 0x0202BC07,
+	['Blazing Sword J'] = 0x0202BC03,
+	['Sacred Stones U'] = 0x0202BCFF,
+	['Sacred Stones J'] = 0x0202BCFB
+}
+
+currentGame = gameIDMap[gameID]
 
 print("Current game: "..currentGame)
+--print("Phase address: "..phaseMap[currentGame])
 
 userInput = {}
 
@@ -444,7 +447,7 @@ function enemyPhase()
 	  end
 
 	  -- Phase Loop
-	  while memory.readbyte(Phase) == 128 do
+	  while memory.readbyte(phaseMap[currentGame]) == 128 do
 	  	local userInput = input.get()
 	  	
 	  	if userInput.F then
@@ -465,7 +468,7 @@ end
 while true do
 	local userInput = input.get()
 
-	if userInput.E and memory.readbyte(Phase) == 128 then
+	if userInput.E and memory.readbyte(phaseMap[currentGame]) == 128 then
 		enemyPhase()
 	else
 		RNGDisplay()
