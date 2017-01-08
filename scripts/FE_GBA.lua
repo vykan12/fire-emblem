@@ -262,6 +262,12 @@ end
 
 function computePathTraceBurns()
 	-- Applies the computeBurn function to determine how many RNs are burned by moving the cursor up, down, left or right
+	
+	local isCharacterSelected = memory.readbyte(0x202BEE8) -- Might not be the correct address
+	local maxMovement = memory.readbyte(0x203A9BB)
+	local pathLength = memory.readbyte(0x203A9BC)
+	local xPosBase = 0x203A9BD
+	local yPosBase = 0x203A9D1
 	local leftRight = 3 -- Used for 0-49
 	local upDown = 4 -- Used for 50-99
 	local currentSeed = {memory.readword(RNGBase+4), memory.readword(RNGBase+2), memory.readword(RNGBase+0)}
@@ -271,6 +277,21 @@ function computePathTraceBurns()
 	gui.text(0, 32, "down: "..computeBurn(leftRight, upDown - 1, currentSeed))
 	gui.text(0, 40, "left: "..computeBurn(leftRight - 1, upDown, currentSeed))
 	gui.text(0, 48, "right: "..computeBurn(leftRight + 1, upDown, currentSeed))
+	
+	if isCharacterSelected == 1 then
+		-- Determine the path traced and print the results
+		for i = 1, math.min(pathLength, maxMovement), 1 do
+			if memory.readbyte(xPosBase + i) > memory.readbyte(xPosBase + i - 1) then
+				gui.text(0 + 8*(i-1), 64, "R")
+			elseif memory.readbyte(xPosBase + i) < memory.readbyte(xPosBase + i - 1) then
+				gui.text(0 + 8*(i-1), 64, "L")
+			elseif memory.readbyte(yPosBase + i) > memory.readbyte(yPosBase + i - 1) then
+				gui.text(0 + 8*(i-1), 64, "D")
+			elseif memory.readbyte(yPosBase + i) < memory.readbyte(yPosBase + i - 1) then
+				gui.text(0 + 8*(i-1), 64, "U")
+			end
+		end
+	end
 end
 
 function RNGDisplay()
@@ -278,7 +299,7 @@ function RNGDisplay()
 	gui.text(0, 8, RNGStateChangeCounter, "red")
 
 	printRNGTable(RNGEntries)
-	--computePathTraceBurns() Uncomment when finished
+	--computePathTraceBurns() --Uncomment when finished
 
 	userInput = input.get()
 	-- Ugly button holding logic
