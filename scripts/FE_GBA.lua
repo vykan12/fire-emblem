@@ -474,10 +474,10 @@ function computePathTraceBurns()
 		leftBurn = 0
 	end
 
-	gui.text(0, 24, "up: "..upBurn)
-	gui.text(0, 32, "down: "..downBurn)
-	gui.text(0, 40, "left: "..leftBurn)
-	gui.text(0, 48, "right: "..rightBurn)
+	gui.text(0, 40, "up: "..upBurn)
+	gui.text(0, 48, "down: "..downBurn)
+	gui.text(0, 56, "left: "..leftBurn)
+	gui.text(0, 64, "right: "..rightBurn)
 	--gui.text(0, 64, "max movement: "..maxMovement)
 	--gui.text(0, 72, "path length: "..pathLength)
 	--gui.text(0, 80, "drawn path: "..movementString)
@@ -565,18 +565,24 @@ function handleUserInput(inputs)
 end
 
 function checkForUserInput()
-	gui.text(16,0,'Input Mode: '..inputMode)
+	gui.text(16,0,'Input Mode: '..inputMode..' (I/O)')
 
 	if EPScriptEnabled then
-		gui.text(16, 8, "EP script enabled")
+		gui.text(16, 8, "EP script enabled (E/F)")
 	else
-		gui.text(16, 8, "EP script disabled")
+		gui.text(16, 8, "EP script disabled (E/F)")
 	end
 
 	if pauseEndOfEnemyPhase then
-		gui.text(16, 16, "Pause end of EP enabled")
+		gui.text(16, 16, "Pause end of EP enabled (J/K)")
 	else
-		gui.text(16, 16, "Pause end of EP disabled")
+		gui.text(16, 16, "Pause end of EP disabled (J/K)")
+	end
+
+	if pathTraceScript then
+		gui.text(16, 24, "Path trace script enabled (T/Y)")
+	else
+		gui.text(16, 24, "Path trace script disabled (T/Y)")
 	end
 
 	local userInput = input.get()
@@ -676,15 +682,15 @@ function enemyPhase()
 	    gui.text(16, 0, string.format('%d of %d done.', currentBattle, battleLimit))
 
     	if EPScriptEnabled then
-				gui.text(16, 8, "EP script enabled")
+				gui.text(16, 8, "EP script enabled (E/F)")
 			else
-				gui.text(16, 8, "EP script disabled")
+				gui.text(16, 8, "EP script disabled (E/F)")
 			end
 
 			if pauseEndOfEnemyPhase then
-				gui.text(16, 16, "Pause end of EP enabled")
+				gui.text(16, 16, "Pause end of EP enabled (J/K)")
 			else
-				gui.text(16, 16, "Pause end of EP disabled")
+				gui.text(16, 16, "Pause end of EP disabled (J/K)")
 			end
 
 	    printRNGTable(RNGEntries) -- TODO: implement RNG increment/decrement when holding Q or W
