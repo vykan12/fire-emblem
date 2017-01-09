@@ -87,6 +87,16 @@ mapping = {
 inputMode = 'Off'
 pathTraceScript = false
 
+function copy(t) 
+	-- shallow copy a table
+	if type(t) ~= "table" then return t end
+	local meta = getmetatable(t)
+	local target = {}
+	for k, v in pairs(t) do target[k] = v end
+	setmetatable(target, meta)
+	return target
+end
+
 function previousRNG(r1, r2, r3)
 	-- Given three sequential RNG values, generate the value before it
 	local val = bit.band(0xFFFE,bit.bxor(r3, bit.rshift(r2, 5), bit.lshift(r1, 11)))
@@ -262,24 +272,19 @@ end
 function computeBurn(leftRight, upDown, currentSeed)
 	-- Computes the number of RN burns required from a target square to the character (determined by left/right and up/down distance between the two)
 	local RNsBurned = 0
-
-	-- Address for length of movement path: 0203A8A4
-
-	-- If target square exceeds character's movement range, no RNs are burned
-	if leftRight + upDown > 7 then -- Replace with character's movement stat
-		return RNsBurned
-	end
+	local currentSeedCopy = copy(currentSeed)
 
 	while leftRight > 0 and upDown > 0 do
-		if math.floor(currentSeed[3]/655.36) <= 49 then
+		if math.floor(currentSeedCopy[3]/655.36) <= 49 then
 			leftRight = leftRight - 1
 		else
 			upDown = upDown - 1
 		end
-		currentSeed = advanceRNGTable(currentSeed)
+		currentSeedCopy = advanceRNGTable(currentSeedCopy)
 		RNsBurned = RNsBurned + 1
 	end
 
+	--gui.text(80, 20, "computeBurn next RN: "..math.floor(currentSeed[3]/655.36)) -- Used to verify that currentSeed wasn't mutated
 	return RNsBurned
 end
 
@@ -348,9 +353,6 @@ function computePathTraceBurns()
 		end
 	end
 
-	upDown = math.abs(upDown)
-	leftRight = math.abs(leftRight)
-
 	for k, v in pairs(directionsEncountered) do
 		numDirsEncountered = numDirsEncountered + 1
 	end
@@ -359,6 +361,9 @@ function computePathTraceBurns()
 	if (maxMovement - pathLength) == 0 then
 		-- at end of movement range
 		if numDirsEncountered == 2 then
+			upDown = math.abs(upDown)
+			leftRight = math.abs(leftRight)
+
 			-- 4 cases: UL, UR, DL, DR
 			if directionsEncountered['U'] and directionsEncountered['L'] then
 				if lastInput == "U" then
@@ -386,10 +391,38 @@ function computePathTraceBurns()
 				end
 			end
 		else
-			-- TODO
+			-- not a full diagonal, so all 4 directions are potential burns
+			local xDir = 1
+			local yDir = 1
+
+			if leftRight < 0 then
+				xDir = -1
+			end
+			if upDown < 0 then
+				yDir = -1
+			end
+
+			upDown = math.abs(upDown)
+			leftRight = math.abs(leftRight)
+
+			upBurn = computeBurn(leftRight, upDown + yDir, currentSeed)
+			downBurn = computeBurn(leftRight, upDown - yDir, currentSeed)
+			leftBurn = computeBurn(leftRight - xDir, upDown, currentSeed)
+			rightBurn = computeBurn(leftRight + xDir, upDown, currentSeed)
 		end
 	elseif (pathLength - maxMovement) == 1 then
 		-- currently on an orange square
+	end
+
+	-- correct for any moves that "go backwards" and therefore don't burn any RNs
+	if lastInput == "U" then
+		downBurn = 0
+	elseif lastInput == "D" then
+		upBurn = 0
+	elseif lastInput == "L" then
+		rightBurn = 0
+	elseif lastInput == "R" then
+		leftBurn = 0
 	end
 
 	gui.text(0, 24, "up: "..upBurn)
