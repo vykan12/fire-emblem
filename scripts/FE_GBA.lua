@@ -296,6 +296,9 @@ function computePathTraceBurns()
 	local pathLength = memory.readbyte(0x203A9BC)
 	local xPosBase = 0x203A9BD
 	local yPosBase = 0x203A9D1
+	local xCoord = 0x203A9B9
+	local yCoord = 0x203A9BA
+	local cursorDistance = math.abs(memory.readbyte(xCoord) - memory.readbyte(xPosBase)) + math.abs(memory.readbyte(yCoord) - memory.readbyte(yPosBase))
 	local leftRight = 0 -- Used for 0-49
 	local upDown = 0 -- Used for 50-99
 	local upBurn = 0
@@ -357,8 +360,8 @@ function computePathTraceBurns()
 		numDirsEncountered = numDirsEncountered + 1
 	end
 
-	-- TODO: Compare path length to max path, factoring in directions encountered to determine potential burns in each direction
-	if (maxMovement - pathLength) == 0 then
+	-- If a full movement path is achieved (except when the cursor is on an orange square)
+	if (maxMovement - pathLength == 0) and (maxMovement >= cursorDistance) then
 		-- at end of movement range
 		if numDirsEncountered == 2 then
 			upDown = math.abs(upDown)
@@ -410,8 +413,9 @@ function computePathTraceBurns()
 			leftBurn = computeBurn(leftRight - xDir, upDown, currentSeed)
 			rightBurn = computeBurn(leftRight + xDir, upDown, currentSeed)
 		end
-	elseif (pathLength - maxMovement) == 1 then
+	elseif (cursorDistance - pathLength) == 1 then
 		-- currently on an orange square
+		gui.text(80, 20, "on an orange square")
 	end
 
 	-- correct for any moves that "go backwards" and therefore don't burn any RNs
@@ -429,13 +433,14 @@ function computePathTraceBurns()
 	gui.text(0, 32, "down: "..downBurn)
 	gui.text(0, 40, "left: "..leftBurn)
 	gui.text(0, 48, "right: "..rightBurn)
-	gui.text(0, 56, "max movement: "..maxMovement)
-	gui.text(0, 64, "path length: "..pathLength)
-	gui.text(0, 72, "drawn path: "..movementString)
-	gui.text(0, 80, "left/right: "..leftRight)
-	gui.text(0, 88, "up/down: "..upDown)
-	gui.text(0, 96, "last input: "..lastInput)
-	gui.text(0, 104, "directions encountered: "..tostring(directionsEncountered))
+	gui.text(0, 64, "max movement: "..maxMovement)
+	gui.text(0, 72, "path length: "..pathLength)
+	gui.text(0, 80, "drawn path: "..movementString)
+	gui.text(0, 88, "cursor distance: "..cursorDistance)
+	--gui.text(0, 80, "left/right: "..leftRight)
+	--gui.text(0, 88, "up/down: "..upDown)
+	--gui.text(0, 96, "last input: "..lastInput)
+	--gui.text(0, 104, "directions encountered: "..tostring(directionsEncountered))
 end
 
 function RNGDisplay()
