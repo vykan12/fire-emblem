@@ -86,6 +86,7 @@ mapping = {
 
 inputMode = 'Off'
 pathTraceScript = false
+lastKeyPressed = ""
 
 function copy(t) 
 	-- shallow copy a table
@@ -312,6 +313,19 @@ function computePathTraceBurns()
 	local currentSeed = {memory.readword(RNGBase+4), memory.readword(RNGBase+2), memory.readword(RNGBase+0)}
 	currentSeed = advanceRNGTable(currentSeed) -- This way next RN is currentSeed[3]
 	
+	-- need to determine last direction pressed in order to find how an orange square was reached
+	local keys = joypad.get(1)
+
+	if keys['left'] then
+		lastKeyPressed = 'L'
+	elseif keys['right'] then
+		lastKeyPressed = 'R'
+	elseif keys['up'] then
+		lastKeyPressed = 'U'
+	elseif keys['down'] then
+		lastKeyPressed = 'D'
+	end
+
 	--if isCharacterSelected == 1 then
 		-- Determine the path traced and print the results
 		for i = 1, math.min(pathLength, maxMovement), 1 do
@@ -415,17 +429,46 @@ function computePathTraceBurns()
 		end
 	elseif (cursorDistance - pathLength) == 1 then
 		-- currently on an orange square
-		gui.text(80, 20, "on an orange square")
+		--gui.text(80, 20, "on an orange square")
+
+		upDown = math.abs(upDown)
+		leftRight = math.abs(leftRight)
+
+		if directionsEncountered['U'] and directionsEncountered['L'] then
+			if lastKeyPressed == "U" then
+				rightBurn = computeBurn(leftRight - 1, upDown + 1, currentSeed)
+			elseif lastKeyPressed == "L" then
+				downBurn = computeBurn(leftRight + 1, upDown - 1, currentSeed)
+			end
+		elseif directionsEncountered['U'] and directionsEncountered['R'] then
+			if lastKeyPressed == "U" then
+				leftBurn = computeBurn(leftRight - 1, upDown + 1, currentSeed)
+			elseif lastKeyPressed == "R" then
+				downBurn = computeBurn(leftRight + 1, upDown - 1, currentSeed)
+			end
+		elseif directionsEncountered['D'] and directionsEncountered['L'] then
+			if lastKeyPressed == "D" then
+				rightBurn = computeBurn(leftRight - 1, upDown + 1, currentSeed)
+			elseif lastKeyPressed == "L" then
+				upBurn = computeBurn(leftRight + 1, upDown - 1, currentSeed)
+			end
+		elseif directionsEncountered['D'] and directionsEncountered['R'] then
+			if lastKeyPressed == "D" then
+				leftBurn = computeBurn(leftRight - 1, upDown + 1, currentSeed)
+			elseif lastKeyPressed == "R" then
+				upBurn = computeBurn(leftRight + 1, upDown - 1, currentSeed)
+			end
+		end
 	end
 
 	-- correct for any moves that "go backwards" and therefore don't burn any RNs
-	if lastInput == "U" then
+	if lastInput == "U" and lastKeyPressed == "U" then
 		downBurn = 0
-	elseif lastInput == "D" then
+	elseif lastInput == "D" and lastKeyPressed == "D" then
 		upBurn = 0
-	elseif lastInput == "L" then
+	elseif lastInput == "L" and lastKeyPressed == "L" then
 		rightBurn = 0
-	elseif lastInput == "R" then
+	elseif lastInput == "R" and lastKeyPressed == "R" then
 		leftBurn = 0
 	end
 
@@ -433,14 +476,15 @@ function computePathTraceBurns()
 	gui.text(0, 32, "down: "..downBurn)
 	gui.text(0, 40, "left: "..leftBurn)
 	gui.text(0, 48, "right: "..rightBurn)
-	gui.text(0, 64, "max movement: "..maxMovement)
-	gui.text(0, 72, "path length: "..pathLength)
-	gui.text(0, 80, "drawn path: "..movementString)
-	gui.text(0, 88, "cursor distance: "..cursorDistance)
-	--gui.text(0, 80, "left/right: "..leftRight)
-	--gui.text(0, 88, "up/down: "..upDown)
-	--gui.text(0, 96, "last input: "..lastInput)
-	--gui.text(0, 104, "directions encountered: "..tostring(directionsEncountered))
+	--gui.text(0, 64, "max movement: "..maxMovement)
+	--gui.text(0, 72, "path length: "..pathLength)
+	--gui.text(0, 80, "drawn path: "..movementString)
+	--gui.text(0, 88, "cursor distance: "..cursorDistance)
+	--gui.text(0, 96, "last key pressed: "..lastKeyPressed)
+	--gui.text(0, 104, "last input: "..lastInput)
+	--gui.text(0, 112, "directions encountered: "..tostring(directionsEncountered))
+	--gui.text(0, 120, "left/right: "..leftRight)
+	--gui.text(0, 128, "up/down: "..upDown)
 end
 
 function RNGDisplay()
