@@ -86,6 +86,8 @@ mapping = {
 
 inputMode = 'Off'
 pathTraceScript = false
+pauseEndOfEnemyPhase = false
+EPScriptEnabled = false
 lastKeyPressed = ""
 
 function copy(t) 
@@ -540,7 +542,6 @@ function RNGDisplay()
 end
 
 function handleUserInput(inputs)
-
 	local lookAheadDistance = 2000
 
 	-- There must be between 2 and 4 inputs, and they must start with the correct symbol
@@ -564,10 +565,35 @@ function handleUserInput(inputs)
 end
 
 function checkForUserInput()
-
 	gui.text(16,0,'Input Mode: '..inputMode)
 
+	if EPScriptEnabled then
+		gui.text(16, 8, "EP script enabled")
+	else
+		gui.text(16, 8, "EP script disabled")
+	end
+
+	if pauseEndOfEnemyPhase then
+		gui.text(16, 16, "Pause end of EP enabled")
+	else
+		gui.text(16, 16, "Pause end of EP disabled")
+	end
+
 	local userInput = input.get()
+
+	if userInput.J then
+		pauseEndOfEnemyPhase = true
+	end
+	if userInput.K then
+		pauseEndOfEnemyPhase = false
+	end
+
+	if userInput.E then
+		EPScriptEnabled = true
+	end
+	if userInput.F then
+		EPScriptEnabled = false
+	end
 
 	for key, value in pairs(heldDown) do
 		if userInput[key] == true and heldDown[key] == false then
@@ -625,20 +651,49 @@ function enemyPhase()
 	    memory.writeword(RNGBase + 0, Rtemp)
 	  end
 
+	  local startingNextRN = nextRNG(memory.readword(RNGBase + 4), memory.readword(RNGBase + 2), memory.readword(RNGBase + 0))
+
 	  -- Phase Loop
 	  while memory.readbyte(phaseMap[currentGame]) == 128 do
 	  	local userInput = input.get()
 	  	
 	  	if userInput.F then
+	  		EPScriptEnabled = false
 	  		escape = true
 	  		break
 	  	end
 
+			if userInput.J then
+				pauseEndOfEnemyPhase = true
+			end
+			if userInput.K then
+				pauseEndOfEnemyPhase = false
+			end
+
 	    joypad.set(1, key1) -- hold A
 	    key1.start = (not key1.start) or nil -- press start every two frames
 	    emu.frameadvance()
-	    gui.text(10,10, string.format('%d of %d done.', currentBattle + 1, battleLimit))
+	    gui.text(16, 0, string.format('%d of %d done.', currentBattle, battleLimit))
+
+    	if EPScriptEnabled then
+				gui.text(16, 8, "EP script enabled")
+			else
+				gui.text(16, 8, "EP script disabled")
+			end
+
+			if pauseEndOfEnemyPhase then
+				gui.text(16, 16, "Pause end of EP enabled")
+			else
+				gui.text(16, 16, "Pause end of EP disabled")
+			end
+
 	    printRNGTable(RNGEntries) -- TODO: implement RNG increment/decrement when holding Q or W
+	  end
+
+	  print("Enemy phase initial RN: "..math.floor(startingNextRN/655.36))
+	  
+	  if pauseEndOfEnemyPhase then
+	  	vba.pause()
 	  end
 	end
 end
@@ -647,7 +702,7 @@ end
 while true do
 	local userInput = input.get()
 
-	if userInput.E and memory.readbyte(phaseMap[currentGame]) == 128 then
+	if EPScriptEnabled and memory.readbyte(phaseMap[currentGame]) == 128 then
 		enemyPhase()
 	else
 		RNGDisplay()
